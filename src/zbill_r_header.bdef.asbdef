@@ -1,0 +1,63 @@
+managed implementation in class zbp_bill_r_header unique;
+strict ( 2 );
+with draft;
+define behavior for ZBILL_R_HEADER //alias <alias_name>
+persistent table zbilling_header
+draft table zbilling_headerd
+lock master total etag BillId
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete ( features : instance);
+  field ( readonly : update, mandatory : create ) BillId;
+  validation validateCurrency on save { create; field currency;}
+  determination setSystemDate on modify{create; field SalesOrg;}
+  draft action Edit;
+  draft action Resume;
+  draft action Activate optimized;
+  draft action Discard;
+action updateCustomerName result[1]$self;
+  draft determine action Prepare{
+
+  validation validateCurrency;
+  }
+
+  association _item{ create; with draft;}
+  mapping for zbilling_header
+    {
+      BillId     = bill_id;
+      BillType   = bill_type;
+      BillDate   = bill_date;
+      CustomerId = customer_id;
+      NetAmount  = net_amount;
+      Currency   = currency;
+      SalesOrg   = sales_org;
+    }
+}
+
+define behavior for Zbill_r_item
+persistent table zbilling_item
+draft table zbilling_itemd
+lock dependent by _header
+authorization dependent by _header
+{
+
+  update;
+  delete;
+  field ( readonly : update, mandatory : create ) BillId, ItemNo;
+  association _header {with draft;}
+
+  mapping for zbilling_item
+    {
+      BillId      = bill_id;
+      ItemNo      = item_no;
+      MaterialId  = material_id;
+      Description = description;
+      Quantity    = quantity;
+      ItemAmount  = item_amount;
+      Currency    = currency;
+      Uom         = uom;
+    }
+}

@@ -1,0 +1,5 @@
+@EndUserText.label: 'Service definition for billing doc header'
+define service Zbill_ui_header {
+  expose ZBILL_ROOT_PROJ_HEADER as Billingdocumentheader;
+  expose ZBILL_ROOT_PROJ_ITEM   as BillingdocumentItem;
+}
