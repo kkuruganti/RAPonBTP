@@ -11,9 +11,11 @@ CLASS lhc_ZBILL_R_HEADER DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR ACTION zbill_r_header~updatecustomername RESULT result.
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR zbill_r_header RESULT result.
+    METHODS copyheader FOR MODIFY
+      IMPORTING keys FOR ACTION zbill_r_header~copyheader.
 
-*    METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
-*      IMPORTING REQUEST requested_authorizations FOR zbill_r_header RESULT result.
+    METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
+      IMPORTING REQUEST requested_authorizations FOR zbill_r_header RESULT result.
 
 ENDCLASS.
 
@@ -22,8 +24,8 @@ CLASS lhc_ZBILL_R_HEADER IMPLEMENTATION.
   METHOD get_instance_authorizations.
   ENDMETHOD.
 
-*  METHOD get_global_authorizations.
-*  ENDMETHOD.
+  METHOD get_global_authorizations.
+  ENDMETHOD.
 
   METHOD validateCurrency.
 
@@ -100,15 +102,53 @@ CLASS lhc_ZBILL_R_HEADER IMPLEMENTATION.
 
   METHOD updateCustomerName.
 
-   READ ENTITIES OF zbill_r_header IN LOCAL MODE
-   ENTITY zbill_r_header
-   ALL FIELDS
-   WITH CORRESPONDING #( keys )
-   RESULT DATA(lt_billdata).
+    READ ENTITIES OF zbill_r_header IN LOCAL MODE
+    ENTITY zbill_r_header
+    ALL FIELDS
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_billdata).
 
   ENDMETHOD.
 
   METHOD get_instance_features.
+  ENDMETHOD.
+
+  METHOD copyHeader.
+    DATA: headers      TYPE TABLE FOR CREATE zbill_r_header.
+    READ TABLE keys WITH KEY  %cid = ' ' INTO DATA(key_with_initial_cid).
+    ASSERT key_with_initial_cid IS INITIAL.
+
+    READ ENTITIES OF zbill_r_header IN LOCAL MODE
+    ENTITY zbill_r_header
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_header) FAILED failed.
+
+*
+    LOOP AT lt_header ASSIGNING FIELD-SYMBOL(<ls_header>).
+
+      APPEND VALUE #( %cid      = keys[ KEY entity %key = <ls_header>-%key ]-%cid
+                       %is_draft = keys[ KEY entity %key = <ls_header>-%key ]-%param-%is_draft
+                       %data     = CORRESPONDING #( <ls_header> EXCEPT BILLID )
+                    )
+         TO headers  ASSIGNING FIELD-SYMBOL(<new_header>).
+
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zbill_r_header IN LOCAL MODE
+    ENTITY zbill_r_header
+    CREATE FIELDS ( BILLID   BillType BillDate  CustomerId NetAmount Currency SalesOrg )
+    WITH headers
+    MAPPED DATA(mapped_create).
+
+*    mapped_create-zbill_r_header[ 1 ]-%cid = headers[ 1 ]-%cid .
+*    mapped_create-zbill_r_header[ 1 ]-%is_draft = headers[ 1 ]-%is_draft.
+*    mapped_create-zbill_r_header[ 1 ]-BILLID = headers[ 1 ]-BILLID.
+
+*    MOVE-CORRESPONDING headers TO mapped_create-zbill_r_header.
+    mapped-zbill_r_header = mapped_create-zbill_r_header.
+
+
+
   ENDMETHOD.
 
 ENDCLASS.

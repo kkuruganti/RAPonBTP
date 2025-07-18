@@ -8,7 +8,7 @@ lock master total etag BillId
 authorization master ( instance )
 //etag master <field_name>
 {
-  create;
+  create (authorization : global);
   update;
   delete ( features : instance);
   field ( readonly : update, mandatory : create ) BillId;
@@ -19,6 +19,8 @@ authorization master ( instance )
   draft action Activate optimized;
   draft action Discard;
 action updateCustomerName result[1]$self;
+factory action copyHeader [1];
+
   draft determine action Prepare{
 
   validation validateCurrency;

@@ -3,6 +3,7 @@ strict ( 2 );
 use draft;
 
 define behavior for ZBILL_ROOT_PROJ_HEADER //alias <alias_name>
+use etag
 {
   use create;
   use update;
@@ -13,6 +14,8 @@ define behavior for ZBILL_ROOT_PROJ_HEADER //alias <alias_name>
   use action Discard;
   use action Prepare;
   use action updateCustomerName;
+  use action copyHeader;
+
     use association _item { create; with draft; }
 }
 define behavior for zbill_root_proj_item
